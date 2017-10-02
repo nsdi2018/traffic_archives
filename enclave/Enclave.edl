@@ -1,0 +1,72 @@
+
+enclave {
+
+	// Import the Ocalls for trusted mutex
+	//from "sgx_tstdc.edl" import *;
+
+	from "../sgxssl/include/sgx_tsgxssl.edl" import *;
+
+    trusted {
+		public void ecall_init([user_check]int *log_switch,
+							   [user_check]void *mgmt_buffer_flow, [user_check]void *enc_flow);
+
+		public void ecall_single_thread();
+
+		public void ecall_producer();
+		public void ecall_consumer();
+
+		public void ecall_search_notify([user_check]const void *keyword);
+
+		/* test */
+		public void ecall_index_test_ccs([user_check]void *state_table, 
+										 [user_check]const void *kw_list, int count);
+		public void ecall_index_test_our([user_check]void *state_table, 
+										 [user_check]const void *kw_list, int count);
+
+		public void ecall_add_kw([user_check]void *state_table,
+								 [user_check]const void *kw_batch, int batch_size);
+    };
+
+    untrusted {
+		// utilities
+		void ocall_print_string([in, string] const char *str);
+
+		void ocall_get_time([out, size=4] int *second,
+							[out, size=4] int *nanosecond);
+
+		void ocall_print_ip(uint32_t sip, uint32_t dip, uint16_t sp, uint16_t dp, uint8_t proto);
+
+		// traffic archive
+		uint8_t *ocall_packet_capture([out, size=12, count=1000]void *pkt_info);
+		
+		void ocall_store([in, size=16]void *hid,
+						 [in, size=1600]void *token_list,
+						 [in, size=1600]void *eid_list,
+						 [in, size=flow_size]void *enc_flow, int flow_size,
+						 [in, size=16]void *mac);
+
+		void ocall_mgmt_flow_fetch([user_check]const void *_enc_fid);
+
+		void ocall_mgmt_flow_flush();
+
+		void ocall_mgmt_kw_fetch([in, size=800]const void *enc_kw_list, int kw_count,
+								 [out, size=100]void *rlt,
+								 [out, size=26000]void *enc_kw_state_list,
+								 [out, size=1600]void *mac_list);
+
+		void ocall_mgmt_kw_store([in, size=800]const void *enc_kw_list, int kw_count,
+								 [in, size=26000]const void *enc_kw_state_list,
+								 [in, size=1600]const void *mac_list);
+
+		void ocall_search_get_state([user_check]const void *kw,
+									[out, size=260]void *state,
+									[out, size=16]void *mac);
+
+		void ocall_search_put_state([user_check]const void *kw,
+									[in, size=260]void *state,
+									[in, size=16]void *mac);
+
+		void ocall_flow_timeout(int crt_time);
+    };
+
+};
